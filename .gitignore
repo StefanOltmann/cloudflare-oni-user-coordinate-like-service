@@ -1,0 +1,17 @@
+**/*.rs.bk
+.DS_Store
+.cargo-ok
+.gradle
+.idea
+/.kotlin/
+/.wrangler/
+/build/
+/dist
+/index.js
+Cargo.lock
+bin/
+kotlin-js-store
+node_modules/
+pkg/
+wasm-pack.log
+worker/

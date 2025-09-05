@@ -1,0 +1,19 @@
+name = "oni-user-coordinate-likes"
+workers_dev = true
+compatibility_date = "2025-07-30"
+
+main = "build/js/packages/worker/kotlin/worker.mjs"
+
+[build]
+command = "gradlew :compileProductionExecutableKotlinJs"
+
+[limits]
+cpu_ms = 10
+
+[observability.logs]
+enabled = true
+
+[[d1_databases]]
+binding = "db"
+database_name = "oni-user-coordinate-likes"
+database_id = "39a70514-31c0-4bae-987f-5511598f9c53"
