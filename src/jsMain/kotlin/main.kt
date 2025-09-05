@@ -70,10 +70,16 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
 
         val likes = result.results.map { it.coordinate }
 
-        return createDefaultResponse(
-            code = 200,
-            text = "OK",
-            body = JSON.stringify(likes)
+        return Response(
+            body = JSON.stringify(likes),
+            init = ResponseInit(
+                status = 200,
+                statusText = "OK",
+                headers = Headers().apply {
+                    appendCorsOptions()
+                    set("Content-Type", "application/json")
+                }
+            )
         )
     }
 
