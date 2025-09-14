@@ -21,18 +21,6 @@ kotlin {
 
         binaries.executable()
     }
-
-    sourceSets {
-
-        jsMain.dependencies {
-
-            /*
-             * Kotlin Wrappers for the Web contain some helpful APIs
-             * that result in cleaner code.
-             */
-            implementation("org.jetbrains.kotlin-wrappers:kotlin-web:2025.9.2")
-        }
-    }
 }
 
 tasks.withType<KotlinJsCompile>().configureEach {
