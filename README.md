@@ -1,5 +1,8 @@
 # Cloudflare ONI User Coordinate Like Service
 
+![Kotlin](https://img.shields.io/badge/kotlin-2.2.20-blue.svg?logo=kotlin)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-gray?&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/StefanOltmann)
+
 A **Cloudflare Worker** that manages liked coordinates of logged-in Steam users using **Cloudflare D1**.
 
 Built with Kotlin/JS.
