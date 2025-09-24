@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+import org.w3c.dom.url.URL
 import org.w3c.fetch.Headers
 import org.w3c.fetch.Request
 import org.w3c.fetch.Response
@@ -57,12 +58,23 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
     /* Convert Long -> String so D1 accepts it */
     val steamIdStr = steamId.toString()
 
+    val cacheKey = createCacheKey(request.url, steamIdStr)
+
+    val cache = js("caches").default as Cache
+
     /**
      * GET = Get the likes of the user
      */
     if (request.method == "GET") {
 
-        /* Query the database for the likes */
+        /* Try to get response from cache first */
+        val cachedResponse = cache.match(cacheKey).await()
+
+        /* Cache hit - return cached response */
+        if (cachedResponse != null)
+            return cachedResponse
+
+        /* Cache miss - query the database */
         val result = env.db.prepare("SELECT coordinate FROM likes WHERE steam_id = ?")
             .bind(steamIdStr)
             .run()
@@ -70,7 +82,7 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
 
         val likes = result.results.map { it.coordinate }
 
-        return Response(
+        val response = Response(
             body = JSON.stringify(likes),
             init = ResponseInit(
                 status = 200,
@@ -78,9 +90,16 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
                 headers = Headers().apply {
                     appendCorsOptions()
                     set("Content-Type", "application/json")
+                    /* Cache for a day - this will be used by both browser and Cloudflare cache */
+                    set("Cache-Control", "public, max-age=86400")
                 }
             )
         )
+
+        /* Store in cache for next time (using waitUntil to not block response) */
+        ctx.waitUntil(cache.put(cacheKey, response.clone()))
+
+        return response
     }
 
     /**
@@ -99,6 +118,9 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
             .run()
             .await()
 
+        /* Invalidate cache for this user after adding a like */
+        ctx.waitUntil(cache.delete(cacheKey))
+
         return createDefaultResponse(200, "Added like for $coordinate")
     }
 
@@ -116,6 +138,9 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
             .run()
             .await()
 
+        /* Invalidate cache for this user after removing a like */
+        ctx.waitUntil(cache.delete(cacheKey))
+
         return createDefaultResponse(200, "Removed like for $coordinate")
     }
 
@@ -123,6 +148,21 @@ suspend fun handleRequestAsync(request: Request, env: Env, ctx: dynamic): Respon
      * Method is not supported.
      */
     return createDefaultResponse(405, "Method Not Allowed")
+}
+
+/**
+ * Helper function to create user-specific cache key
+ */
+fun createCacheKey(
+    baseUrl: String,
+    steamId: String
+): Request {
+
+    val cacheUrl = URL(baseUrl)
+
+    cacheUrl.pathname = "/user-likes/$steamId"
+
+    return Request(cacheUrl.toString())
 }
 
 private fun createDefaultResponse(

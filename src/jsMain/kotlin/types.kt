@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+import org.w3c.fetch.Request
+import org.w3c.fetch.Response
 import kotlin.js.Promise
 
 /**
@@ -60,4 +62,26 @@ external interface D1Result {
  */
 external interface Row {
     val coordinate: String
+}
+
+/**
+ * Cloudflare Workers Cache API interface.
+ */
+external interface Cache {
+
+    /**
+     * Returns a Promise that resolves to the response associated with the
+     * first matching request in the cache.
+     */
+    fun match(request: Request): Promise<Response?>
+
+    /**
+     * Takes both a request and its response and adds it to the given cache.
+     */
+    fun put(request: Request, response: Response): Promise<Unit>
+
+    /**
+     * Finds the cache entry whose key is the request, and if found, deletes the cache entry.
+     */
+    fun delete(request: Request): Promise<Boolean>
 }
